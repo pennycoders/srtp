@@ -172,6 +172,9 @@ func ioctl(fd uintptr, op uintptr, data unsafe.Pointer) error {
 // Available returns true if hardware crypto is available on this system.
 // This performs a one-time detection by probing /proc/crypto.
 func Available() bool {
+	// TEMPORARY: Disable hardware crypto to debug software fallback
+	return false
+
 	detectHardware()
 	if !hardwareDetected {
 		return false
