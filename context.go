@@ -219,9 +219,9 @@ func (c *Context) createCipher(mki, masterKey, masterSalt []byte, encryptSRTP, e
 		ProtectionProfileAes128CmHmacSha1_80,
 		ProtectionProfileAes256CmHmacSha1_32,
 		ProtectionProfileAes256CmHmacSha1_80:
-		return newSrtpCipherAesCmHmacSha1(profileWithArgs, masterKey, masterSalt, mki, encryptSRTP, encryptSRTCP, useCryptex)
+		return newSrtpCipherAesCmHmacSha1WithHWFallback(profileWithArgs, masterKey, masterSalt, mki, encryptSRTP, encryptSRTCP, useCryptex)
 	case ProtectionProfileNullHmacSha1_32, ProtectionProfileNullHmacSha1_80:
-		return newSrtpCipherAesCmHmacSha1(profileWithArgs, masterKey, masterSalt, mki, false, false, false)
+		return newSrtpCipherAesCmHmacSha1WithHWFallback(profileWithArgs, masterKey, masterSalt, mki, false, false, false)
 	default:
 		return nil, fmt.Errorf("%w: %#v", errNoSuchSRTPProfile, c.profile)
 	}
