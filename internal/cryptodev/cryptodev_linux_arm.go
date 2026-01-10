@@ -226,32 +226,19 @@ func NewCTRCipher(key []byte) (*CTRCipher, error) {
 	}
 	fd := handle.Fd()
 
-	// Determine which cipher ID to use
-	cipherID := uint32(cryptoAESCTR)
-	if hasRockchipCTR {
-		cipherID = cryptoRKAESCTR
-	}
-
 	// Keep key alive during session creation
 	keyCopy := make([]byte, len(key))
 	copy(keyCopy, key)
 
+	// Always use standard cipher ID - the kernel routes to hardware driver automatically
 	sess := &sessionOp{
-		cipher: cipherID,
+		cipher: cryptoAESCTR,
 		keylen: uint32(len(keyCopy)),
 		key:    unsafe.Pointer(&keyCopy[0]),
 	}
 
 	if err := ioctl(fd, ciocgsession, unsafe.Pointer(sess)); err != nil {
-		// Try fallback to standard ID if Rockchip failed
-		if cipherID == cryptoRKAESCTR && hasStandardCTR {
-			sess.cipher = cryptoAESCTR
-			if err2 := ioctl(fd, ciocgsession, unsafe.Pointer(sess)); err2 != nil {
-				return nil, err2
-			}
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	sessionsCreated.Add(1)
@@ -367,31 +354,18 @@ func NewHMACSHA1(key []byte) (*HMACSHA1, error) {
 	}
 	fd := handle.Fd()
 
-	// Determine which MAC ID to use
-	macID := uint32(cryptoSHA1HMAC)
-	if hasRockchipHMAC {
-		macID = cryptoRKSHA1HMAC
-	}
-
 	keyCopy := make([]byte, len(key))
 	copy(keyCopy, key)
 
+	// Always use standard MAC ID - the kernel routes to hardware driver automatically
 	sess := &sessionOp{
-		mac:       macID,
+		mac:       cryptoSHA1HMAC,
 		mackeylen: uint32(len(keyCopy)),
 		mackey:    unsafe.Pointer(&keyCopy[0]),
 	}
 
 	if err := ioctl(fd, ciocgsession, unsafe.Pointer(sess)); err != nil {
-		// Try fallback to standard ID if Rockchip failed
-		if macID == cryptoRKSHA1HMAC && hasStandardHMAC {
-			sess.mac = cryptoSHA1HMAC
-			if err2 := ioctl(fd, ciocgsession, unsafe.Pointer(sess)); err2 != nil {
-				return nil, err2
-			}
-		} else {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	sessionsCreated.Add(1)
