@@ -42,10 +42,12 @@ const (
 )
 
 // Standard cryptodev ioctl commands for 32-bit ARM.
+// Values calculated as: direction(2) | size(14) | type(8) | nr(8)
+// where type='c' (0x63) and direction: _IOC_READ=2, _IOC_WRITE=1
 const (
-	ciocgsession = 0xc01c6366 // Create session
-	ciocfsession = 0x40046367 // Free session
-	cioccrypt    = 0xc0286364 // Perform crypto operation
+	ciocgsession = 0xc01c6366 // _IOWR('c', 102, struct session_op) - size 28
+	ciocfsession = 0x40046367 // _IOW('c', 103, uint32) - size 4
+	cioccrypt    = 0xc01c6368 // _IOWR('c', 104, struct crypt_op) - size 28
 )
 
 // Operation types.
@@ -172,9 +174,6 @@ func ioctl(fd uintptr, op uintptr, data unsafe.Pointer) error {
 // Available returns true if hardware crypto is available on this system.
 // This performs a one-time detection by probing /proc/crypto.
 func Available() bool {
-	// TEMPORARY: Disable hardware crypto to debug software fallback
-	return false
-
 	detectHardware()
 	if !hardwareDetected {
 		return false
