@@ -4,8 +4,11 @@
 package srtp
 
 import (
+	"github.com/pion/logging"
 	"github.com/pion/srtp/v3/internal/cryptodev"
 )
+
+var factoryLogger = logging.NewDefaultLoggerFactory().NewLogger("srtp")
 
 // newSrtpCipherAesCmHmacSha1WithHWFallback creates an AES-CM-HMAC-SHA1 cipher,
 // attempting hardware acceleration first and falling back to software.
@@ -21,11 +24,13 @@ func newSrtpCipherAesCmHmacSha1WithHWFallback(
 	if cryptodev.Available() {
 		hw, err := newSrtpCipherAesCmHmacSha1HW(profile, masterKey, masterSalt, mki, encryptSRTP, encryptSRTCP, useCryptex)
 		if err == nil {
+			factoryLogger.Info("Using hardware-accelerated SRTP cipher")
 			return hw, nil
 		}
-		// Hardware failed, fall through to software
+		factoryLogger.Warnf("Hardware SRTP cipher failed, falling back to software: %v", err)
 	}
 
 	// Fall back to software implementation
+	factoryLogger.Debug("Using software SRTP cipher")
 	return newSrtpCipherAesCmHmacSha1(profile, masterKey, masterSalt, mki, encryptSRTP, encryptSRTCP, useCryptex)
 }
